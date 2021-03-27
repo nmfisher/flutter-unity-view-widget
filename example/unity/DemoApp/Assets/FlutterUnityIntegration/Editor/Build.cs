@@ -40,8 +40,8 @@ public class Build
         if (Directory.Exists(apkPath))
             Directory.Delete(apkPath, true);
 
-        if (Directory.Exists(androidExportPath))
-            Directory.Delete(androidExportPath, true);
+        // if (Directory.Exists(androidExportPath))
+        //     Directory.Delete(androidExportPath, true);
 
         EditorUserBuildSettings.androidBuildSystem = AndroidBuildSystem.Gradle;
 

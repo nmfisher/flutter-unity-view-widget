@@ -16,6 +16,8 @@ public class NativeAPI
 
     public static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+    Debug.Log("\n\n\nSCENE LOADED\n\n\n");
+
 #if UNITY_ANDROID
         try
         {

@@ -77,15 +77,19 @@ public class UnityMessageManager : SingletonMonoBehaviour<UnityMessageManager>
 
     private Dictionary<int, UnityMessage> waitCallbackMessageMap = new Dictionary<int, UnityMessage>();
 
-    private void Start()
+    void Start()
     {
+        Debug.Log("STARTING!");
+                SendMessageToFlutter("STARTING!!");
+
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        Debug.Log("Scene loaded!!");
         NativeAPI.OnSceneLoaded(scene, mode);
-
+        SendMessageToFlutter("SCENE LOADED!!");
     }
 
     public void ShowHostMainWindow()

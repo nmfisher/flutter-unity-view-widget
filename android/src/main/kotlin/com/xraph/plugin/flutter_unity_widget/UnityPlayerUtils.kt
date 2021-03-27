@@ -9,6 +9,11 @@ import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
+import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.graphics.SurfaceTexture;
+import android.view.TextureView;
 import com.unity3d.player.IUnityPlayerLifecycleEvents
 import com.unity3d.player.UnityPlayer
 import java.util.concurrent.CopyOnWriteArraySet
@@ -42,7 +47,44 @@ class UnityPlayerUtils {
                 Handler(Looper.getMainLooper()).post {
                     if (!reInitialize) {
                         activity.window.setFormat(PixelFormat.RGBA_8888)
+                        // activity.window.setFormat(PixelFormat.TRANSPARENT)
                         unityPlayer = UnityPlayer(activity, ule)
+                        val f = UnityPlayer::class.java.getDeclaredField("mGlView")
+                        f.isAccessible = true
+                        val v = f.get(unityPlayer) as SurfaceView
+                        unityPlayer!!.removeView(v)
+                        // v.setZOrderMediaOverlay(true)
+                        v.getHolder().setFormat(PixelFormat.TRANSPARENT)
+                        v.setZOrderOnTop(false)
+                        unityPlayer!!.addView(v)
+                        // val updateGLDisplay = UnityPlayer::class.java.getDeclaredMethod("updateGLDisplay", Array(2) { javaClass<Int>(), javaClass<Surface>() })
+                        // updateGLDisplay.setAccessible(true)
+                        // val sendSurfaceChangedEvent = UnityPlayer::class.java.getDeclaredMethod("sendSurfaceChangedEvent", null)
+                        // sendSurfaceChangedEvent.setAccessible(true)
+                        // val view = TextureView(activity);
+                        // view.setOpaque(false)
+                        // view.setSurfaceTextureListener(object : TextureView.SurfaceTextureListener{
+                        //     override fun onSurfaceTextureAvailable(surface:SurfaceTexture,  width:Int, height:Int) {
+                        //         unityPlayer!!.displayChanged(0, Surface(surface))
+                        //         // updateGLDisplay.invoke(unityPlayer, 0, Surface(surface));
+                        //     }
+
+                        //     override fun onSurfaceTextureDestroyed(surface:SurfaceTexture ) : Boolean {
+                        //         // updateGLDisplay.invoke(unityPlayer, 0, null);
+                        //         return true
+                        //      }
+
+                        //     override fun onSurfaceTextureSizeChanged(surface:SurfaceTexture , width:Int, height:Int) {
+                        //         // updateGLDisplay.invoke(unityPlayer, 0, Surface(surface));
+                        //     }
+
+                        //     override fun onSurfaceTextureUpdated(surface:SurfaceTexture) {
+                        //         // updateGLDisplay.invoke(unityPlayer, 0, Surface(surface));
+                        //         // sendSurfaceChangedEvent.invoke(unityPlayer);
+                        //     }
+                        // });
+                        // unityPlayer!!.addViewToPlayer(view, true)
+                        
                     }
 
                     try {
@@ -82,6 +124,7 @@ class UnityPlayerUtils {
 
         fun postMessage(gameObject: String, methodName: String, message: String) {
             if (!isUnityReady) {
+                Log.e("UnityPlayerUtils", "Not ready!")
                 return
             }
             UnityPlayer.UnitySendMessage(gameObject, methodName, message)
@@ -131,6 +174,8 @@ class UnityPlayerUtils {
          */
         @JvmStatic
         fun onUnitySceneLoaded(name: String, buildIndex: Int, isLoaded: Boolean, isValid: Boolean) {
+            Log.e(LOG_TAG, "Unity scenel oaded")
+
             for (listener in mUnityEventListeners) {
                 try {
                     listener.onSceneLoaded(name, buildIndex, isLoaded, isValid)
@@ -145,6 +190,8 @@ class UnityPlayerUtils {
          */
         @JvmStatic
         fun onUnityMessage(message: String) {
+            Log.e(LOG_TAG, "UNITY Message " + message)
+
             for (listener in mUnityEventListeners) {
                 try {
                     listener.onMessage(message)
