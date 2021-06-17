@@ -5,13 +5,22 @@ import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
 import com.unity3d.player.UnityPlayerActivity
+import com.unity3d.player.UnityPlayer
 import java.util.Objects
+import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 
 class OverrideUnityActivity : UnityPlayerActivity() {
     private lateinit var mMainActivityClass: Class<*>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val f = UnityPlayer::class.java.getDeclaredField("mGlView")
+        f.isAccessible = true
+        val v = f.get(mUnityPlayer) as SurfaceView
+        // unityPlayer!!.removeView(v);
+        v.setZOrderOnTop(false);
         instance = this
         this.window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         val intent = intent
