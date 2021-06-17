@@ -87,13 +87,14 @@ var sharedApplication: UIApplication?
         self.ufw = UnityFrameworkLoad()
 
         self.ufw?.setDataBundleId("com.unity3d.framework")
-        self.ufw?.register(self)
 
         registerUnityListener()
         self.ufw?.runEmbedded(withArgc: gArgc, argv: gArgv, appLaunchOpts: appLaunchOpts)
 
         if self.ufw?.appController() != nil {
             controller = self.ufw?.appController()
+            controller?.unityMessageHandler = self.unityMessageHandlers
+            controller?.unitySceneLoadedHandler = self.unitySceneLoadedHandlers
             self.ufw?.appController()?.window?.windowLevel = UIWindow.Level(UIWindow.Level.normal.rawValue - 1)
         }
         _isUnityLoaded = true
@@ -141,21 +142,21 @@ var sharedApplication: UIApplication?
         }
     }
 
-    func unregisterUnityListener() {
+    func registerUnityListener() {
         if self.unityIsInitiallized() {
             self.ufw?.register(self)
         }
     }
 
-    func registerUnityListener() {
+    func unregisterUnityListener() {
         if self.unityIsInitiallized() {
             self.ufw?.unregisterFrameworkListener(self)
         }
     }
-    
-    private func unityDidUnload(notification: Notification?) {
+
+    @objc
+    public func unityDidUnload(_ notification: Notification!) {
         unregisterUnityListener()
-        self.ufw?.unregisterFrameworkListener(self)
         self.ufw = nil
         self._isUnityReady = false
         self._isUnityLoaded = false
@@ -220,10 +221,6 @@ var sharedApplication: UIApplication?
     // Unoad unity player
     func unload() {
         self.ufw?.unloadApplication()
-        unregisterUnityListener()
-        self.ufw = nil
-        self._isUnityReady = false
-        self._isUnityLoaded = false
     }
 
     func isUnityLoaded() -> Bool {
@@ -248,26 +245,28 @@ var sharedApplication: UIApplication?
     }
     
     @objc
-    public static func unityMessageHandler(_ message: UnsafePointer<Int8>?) {
+    func unityMessageHandlers(_ message: UnsafePointer<Int8>?) {
         if let strMsg = message {
             globalChannel?.invokeMethod("events#onUnityMessage", arguments: String(utf8String: strMsg))
         } else {
             globalChannel?.invokeMethod("events#onUnityMessage", arguments: "")
         }
     }
-
-    @objc
-    public static func unitySceneLoadedHandler(name: UnsafePointer<Int8>?, buildIndex: UnsafePointer<Int>?, isLoaded: UnsafePointer<ObjCBool>?, isValid: UnsafePointer<ObjCBool>?) {
+    
+    func unitySceneLoadedHandlers(name: UnsafePointer<Int8>?, buildIndex: UnsafePointer<Int32>?, isLoaded: UnsafePointer<Bool>?, isValid: UnsafePointer<Bool>?) {
         if let sceneName = name,
            let bIndex = buildIndex,
            let loaded = isLoaded,
            let valid = isValid {
+            
+            let loadedVal = Bool((Int(bitPattern: loaded) != 0))
+            let validVal = Bool((Int(bitPattern: valid) != 0))
         
             let addObject: Dictionary<String, Any> = [
                 "name": String(utf8String: sceneName) ?? "",
-                "buildIndex": bIndex,
-                "isLoaded": loaded,
-                "isValid": valid,
+                "buildIndex": Int(bitPattern: bIndex),
+                "isLoaded": loadedVal,
+                "isValid": validVal,
             ]
             globalChannel?.invokeMethod("events#onUnitySceneLoaded", arguments: addObject)
         }
